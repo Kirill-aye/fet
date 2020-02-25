@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for
-from model import add_user
+from models import add_user
 
 app = Flask(__name__)
 
@@ -18,5 +18,5 @@ def index():
 def user_page(name):
     return render_template('user.html', name=name)
 
-
-app.run(debug=True) # app.run('0.0.0.0', '3000', debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
