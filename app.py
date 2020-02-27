@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
-from model import add_user
+from flask import Flask, render_template, request, redirect, url_for, session
+from models import add_user
+from sqlalchemy.exc import IntegrityError
+from models import AccountExists
 
 app = Flask(__name__)
+app.secret_key = 'themostsecuredpasswordinthewholeworld'
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -10,7 +13,13 @@ def index():
         email = request.form['email']
         password = request.form['password']
         password_check = request.form['password_check']
-        add_user(name, email, password)
+        if password != password_check:
+            return render_template('index.html', error='passwords_dont_match')
+        try:
+            add_user(name, email, password)
+        except AccountExists:
+            return render_template('index.html', error='account_already_exists')
+        session['account'] = name
         return redirect('/users/' + name)
     return render_template('index.html')
 
@@ -18,5 +27,10 @@ def index():
 def user_page(name):
     return render_template('user.html', name=name)
 
+@app.route('/logout')
+def logout():
+    session.pop('account', None)
+    return redirect(url_for('index'))
 
-app.run(debug=True) # app.run('0.0.0.0', '3000', debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

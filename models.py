@@ -3,9 +3,16 @@ from sqlalchemy import (Column, Integer, String, Boolean, Text, Date,
                         ForeignKey, create_engine)
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import IntegrityError
 
 engine = create_engine('sqlite:///app.db', echo=True)
 Base = declarative_base(bind=engine)
+
+
+class AccountExists(Exception):
+    '''
+    Authentification pair already in db
+    '''
 
 class Abstract:
     id = Column(Integer, primary_key=True)
@@ -43,6 +50,10 @@ def add_user(name, email, password):
     engine = create_engine('sqlite:///app.db', echo=True)
     session = Session(bind=engine)
     user = User(username=name, email=email, password=password)
-    session.add(user)
-    session.commit()
-    session.close()
+    try:
+        session.add(user)
+        session.commit()
+    except IntegrityError:
+        raise AccountExists
+    finally:
+        session.close()
